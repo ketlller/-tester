@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web3 App with Metamask</title>
+</head>
+<body>
+    <h1>Token Withdrawal App</h1>
+    <p>Connect your Metamask wallet and withdraw tokens.</p>
+    
+    <button id="connectWallet">Connect Wallet</button>
+    <button id="withdrawTokens">Withdraw Tokens</button>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.2/web3.min.js"></script>
+    <script>
+        // Обновите этот адрес на адрес вашего смарт контракта
+        const contractAddress = 'YOUR_CONTRACT_ADDRESS';
+        
+        // Адрес BSC RPC ноды
+        const bscRpcUrl = 'https://bsc-dataseed.binance.org/';
+        
+        let web3;
+        let contractInstance;
+        
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                await window.ethereum.enable();
+                web3 = new Web3(window.ethereum);
+                contractInstance = new web3.eth.Contract(contractAbi, contractAddress);
+                console.log('Connected to Metamask');
+            } else {
+                console.log('Metamask not found');
+            }
+        }
+        
+        async function withdrawTokens() {
+            const userAddress = (await web3.eth.getAccounts())[0];
+            
+            // Генерация хеша транзакции
+            const txHash = web3.utils.soliditySha3(userAddress);
+            
+            // Получение подписи от Metamask
+            const signature = await web3.eth.personal.sign(web3.utils.toHex(txHash), userAddress);
+            
+            // Вызов функции смарт контракта для вывода токенов
+            await contractInstance.methods.withdrawTokens(100, txHash, signature).send({ from: userAddress });
+            
+            console.log('Tokens withdrawn successfully');
+        }
+        
+        document.getElementById('connectWallet').addEventListener('click', connectWallet);
+        document.getElementById('withdrawTokens').addEventListener('click', withdrawTokens);
+    </script>
+</body>
+</html>
